@@ -1,0 +1,29 @@
+{
+  "name": "techra-backend-typescript",
+  "version": "2.1.0",
+  "description": "Techra Backend API with Azure OpenAI and Search integration",
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "fastify": "^4.24.3",
+    "@fastify/cors": "^8.4.0",
+    "@azure/openai": "^1.0.0-beta.7",
+    "@azure/search-documents": "^12.0.0",
+    "@azure/identity": "^4.0.0",
+    "zod": "^3.22.4",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.2.2",
+    "tsx": "^4.6.0",
+    "@types/node": "^20.8.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
