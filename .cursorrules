@@ -1,0 +1,139 @@
+# Techra Project Assistant Rules
+
+## Project Overview
+You are working on Techra - a train HVAC troubleshooting system for Öresundståg (Swedish trains).
+
+## Tech Stack
+
+### Backend
+- Language: TypeScript
+- Framework: Fastify
+- Hosting: Azure Container Apps
+- Database: PostgreSQL on Azure
+- Container Registry: techraacr.azurecr.io
+- URL: https://techra-api.livelystone-230c6e00.swedencentral.azurecontainerapps.io
+
+### Frontend  
+- Framework: React with TypeScript
+- Styling: Tailwind CSS
+- Hosting: Azure Static Web Apps
+- Auth: Azure AD/MSAL
+- URL: https://www.techra.app
+
+### AI Services
+- Azure OpenAI (deployment: techra-chat)
+- Azure Cognitive Search (index: techra-docs-index)
+- Storage: Azure Blob (docs-techra container)
+
+## Database Schema
+
+```sql
+trains (id, train_number, name, operator, status, created_at, updated_at)
+cars (id, train_id, car_number, car_type, position, status)
+aggregates (id, aggregate_number, type, status, current_car_id, temperature, pressure)
+```
+
+## User Roles
+- SUPERVISOR_GROUP: d5f7f6e7-380f-468d-9d0e-6a7c30fd3ef9
+- TECHNICIAN_GROUP: 5dc860e3-600d-4332-9200-5cdc53e7242b  
+- VIEWER_GROUP: 04889f68-70f8-4848-9a7a-9ca3cd1c8864
+
+## API Patterns
+
+### Backend Endpoint Pattern
+```typescript
+fastify.get('/api/resource', { preHandler: authenticate }, async (request, reply) => {
+  try {
+    const result = await pool.query('SELECT ...');
+    return result.rows;
+  } catch (error) {
+    console.error('Error:', error);
+    reply.code(500).send({ error: 'Failed to...' });
+  }
+});
+```
+
+### Frontend API Hook Pattern
+```typescript
+const useResource = () => {
+  const { apiRequest } = useAuth();
+  return useQuery({
+    queryKey: ['resource'],
+    queryFn: () => apiRequest('/api/resource')
+  });
+};
+```
+
+## Coding Standards
+
+1. **Always use TypeScript** with strict mode
+2. **Authentication required** on all API endpoints except /health
+3. **Error handling** with try-catch blocks
+4. **Logging** for all operations
+5. **Transaction support** for multi-table operations
+6. **Use existing patterns** from the codebase
+7. **Tailwind only** - no custom CSS
+8. **Mobile responsive** - test on small screens
+9. **Swedish language** for UI labels where appropriate
+
+## Current Implementation Status
+
+### ✅ Completed
+- Phase 1: Azure Infrastructure
+- Phase 2: Basic API with auth
+- Phase 3: Frontend shell with navigation
+- Database connection setup
+
+### 🚧 In Progress  
+- Phase 4: Document management
+- Phase 5: AI troubleshooting with RAG
+
+### 📋 Todo
+- Phase 6: Train monitoring CRUD
+- Phase 7: Admin panel
+- Phase 8: Multi-tenant & production
+
+## File Structure
+
+```
+/backend (techra-backend-typescript)
+  /src
+    server.ts - Main application
+    database.ts - Database connections and queries
+  package.json
+  Dockerfile
+  
+/frontend (techra-frontend)  
+  /src
+    /components - React components
+    /services - API services
+    /contexts - React contexts (auth)
+    /hooks - Custom hooks
+```
+
+## Deployment Commands
+
+Backend:
+```bash
+az acr build --registry techraacr --image techra-api:vX.X https://github.com/fruit456/techra-backend-typescript.git
+az containerapp update --name techra-api --resource-group rg-techra-prod --image techraacr.azurecr.io/techra-api:vX.X
+```
+
+Frontend: Auto-deploys via GitHub Actions
+
+## Important Notes
+
+- GitHub username: fruit456
+- Always increment version numbers
+- Test database endpoints at /api/db/health first
+- Frontend uses VITE_API_BASE env variable
+- PostgreSQL credentials in Container App env vars
+- Mock data acceptable for development/testing
+
+When implementing features:
+1. Start with database schema if needed
+2. Create backend endpoints
+3. Test with curl
+4. Create frontend components
+5. Add to navigation
+6. Test end-to-end

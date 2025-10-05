@@ -3,6 +3,7 @@ import cors from '@fastify/cors';
 import { OpenAIClient, AzureKeyCredential } from '@azure/openai';
 import { SearchClient } from '@azure/search-documents';
 import dotenv from 'dotenv';
+import pg from 'pg';
 
 // Load environment variables
 dotenv.config();
@@ -13,6 +14,18 @@ const config = {
   host: '0.0.0.0',
   tenantId: process.env.TENANT_ID || '71416bf2-04a4-4715-a8d2-6af239168e20',
   clientId: process.env.CLIENT_ID || 'f0b0fbfa-3b0c-49a7-83ee-27ba1cbdcfe5',
+  // PostgreSQL
+  postgres: {
+    host: process.env.DB_HOST || 'techra-postgres-server.postgres.database.azure.com',
+    port: parseInt(process.env.DB_PORT || '5432'),
+    database: process.env.DB_NAME || 'techra',
+    user: process.env.DB_USER || 'techra_admin',
+    password: process.env.DB_PASSWORD || '',
+    ssl: { rejectUnauthorized: false },
+    max: 20,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 2000
+  },
   // Azure OpenAI
   azureOpenAI: {
     endpoint: process.env.AZURE_OPENAI_ENDPOINT || '',
@@ -53,6 +66,7 @@ interface SearchResult {
 // Initialize Azure clients
 let openAIClient: OpenAIClient | null = null;
 let searchClient: SearchClient<any> | null = null;
+let pgPool: pg.Pool | null = null;
 
 if (config.azureOpenAI.endpoint && config.azureOpenAI.key) {
   openAIClient = new OpenAIClient(
@@ -73,6 +87,24 @@ if (config.azureSearch.endpoint && config.azureSearch.key) {
   console.log('✅ Azure Search client initialized');
 } else {
   console.warn('⚠️ Azure Search not configured - RAG features disabled');
+}
+
+// Initialize PostgreSQL pool
+try {
+  pgPool = new pg.Pool(config.postgres);
+  // Fire-and-forget a quick connection test on startup
+  (async () => {
+    try {
+      const client = await pgPool!.connect();
+      const res = await client.query('SELECT NOW()');
+      client.release();
+      console.log('✅ Database connected:', res.rows[0]?.now);
+    } catch (err) {
+      console.error('❌ Database initial connection failed:', err);
+    }
+  })();
+} catch (err) {
+  console.error('❌ Failed to initialize PostgreSQL pool:', err);
 }
 
 // Initialize Fastify
@@ -164,7 +196,7 @@ async function setupServer() {
   // Health check
   fastify.get('/', async () => {
     return { 
-      message: 'Techra TypeScript Backend API v2.1', 
+      message: 'Techra TypeScript Backend API v2.1.1', 
       status: 'healthy',
       features: {
         openai: !!openAIClient,
@@ -178,9 +210,25 @@ async function setupServer() {
   fastify.get('/health', async () => {
     return {
       status: 'healthy',
-      version: '2.1.0',
+      version: '2.1.1',
       timestamp: new Date().toISOString()
     };
+  });
+
+  // Database health (protected)
+  fastify.get('/api/db/health', { preHandler: authenticate }, async (_request, _reply) => {
+    if (!pgPool) {
+      return { database: 'disconnected', reason: 'Pool not initialized', timestamp: new Date().toISOString() };
+    }
+    try {
+      const client = await pgPool.connect();
+      const result = await client.query('SELECT NOW()');
+      client.release();
+      return { database: 'connected', now: result.rows[0]?.now, timestamp: new Date().toISOString() };
+    } catch (error) {
+      console.error('DB health check failed:', error);
+      return { database: 'disconnected', error: 'Connection failed', timestamp: new Date().toISOString() };
+    }
   });
 
   // User info endpoint
