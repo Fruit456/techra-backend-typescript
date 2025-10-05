@@ -195,15 +195,24 @@ async function setupServer() {
     credentials: true
   });
 
+  // Test database connection on startup
+  await testConnection();
+
+  // Register admin routes (Phase 7 & 8)
+  registerAdminRoutes(fastify, authenticate);
+
   // Health check
   fastify.get('/', async () => {
     return { 
-      message: 'Techra TypeScript Backend API v2.1.1', 
+      message: 'Techra TypeScript Backend API v2.3.0', 
       status: 'healthy',
       features: {
         openai: !!openAIClient,
         search: !!searchClient,
-        rag: !!openAIClient && !!searchClient
+        rag: !!openAIClient && !!searchClient,
+        database: !!pgPool,
+        multiTenant: true,
+        adminPanel: true
       },
       timestamp: new Date().toISOString()
     };
@@ -212,7 +221,7 @@ async function setupServer() {
   fastify.get('/health', async () => {
     return {
       status: 'healthy',
-      version: '2.1.1',
+      version: '2.3.0',
       timestamp: new Date().toISOString()
     };
   });
@@ -336,9 +345,6 @@ async function setupServer() {
       payload: { message: query }
     }).then(response => response.json());
   });
-
-  // Register admin routes (Phase 7 & 8)
-  registerAdminRoutes(fastify, authenticate);
 
   // Debug endpoint (only in development)
   if (process.env.NODE_ENV === 'development') {
