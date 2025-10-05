@@ -4,6 +4,8 @@ import { OpenAIClient, AzureKeyCredential } from '@azure/openai';
 import { SearchClient } from '@azure/search-documents';
 import dotenv from 'dotenv';
 import pg from 'pg';
+import { testConnection } from './database-pool';
+import { registerAdminRoutes } from './admin-routes';
 
 // Load environment variables
 dotenv.config();
@@ -334,6 +336,9 @@ async function setupServer() {
       payload: { message: query }
     }).then(response => response.json());
   });
+
+  // Register admin routes (Phase 7 & 8)
+  registerAdminRoutes(fastify, authenticate);
 
   // Debug endpoint (only in development)
   if (process.env.NODE_ENV === 'development') {
