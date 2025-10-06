@@ -1,6 +1,6 @@
 {
   "name": "techra-backend-typescript",
-  "version": "2.4.0",
+  "version": "2.4.2",
   "description": "Techra Backend API with Azure OpenAI, Search and Multi-Tenant support",
   "main": "dist/server.js",
   "scripts": {
