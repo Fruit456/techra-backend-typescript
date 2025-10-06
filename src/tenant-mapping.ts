@@ -15,7 +15,19 @@ const DEFAULT_TENANT_MAPPINGS: TenantMapping[] = [
     azureTenantId: '71416bf2-04a4-4715-a8d2-6af239168e20',
     dbTenantId: 'default',
     name: 'Öresundståg'
-  }
+  },
+  // Add Snälltåget when they have their own Azure AD
+  // {
+  //   azureTenantId: 'SNALLTAGET-AZURE-TENANT-ID',
+  //   dbTenantId: 'snalltaget',
+  //   name: 'Snälltåget'
+  // }
+];
+
+// Techvana super-admins (can access ALL tenants)
+const TECHVANA_SUPER_ADMINS = [
+  'elias-chahoud@hotmail.com',
+  // Add more Techvana admins here
 ];
 
 // Parse tenant mappings from environment variable or use defaults
@@ -70,6 +82,33 @@ export function getAllTenants(): TenantMapping[] {
 }
 
 /**
+ * Check if user is Techvana super-admin (can access all tenants)
+ * @param email - User email
+ * @returns True if user is super-admin
+ */
+export function isTechvanaSuperAdmin(email: string): boolean {
+  return TECHVANA_SUPER_ADMINS.includes(email.toLowerCase());
+}
+
+/**
+ * Get tenant ID for user, considering super-admin status
+ * @param email - User email
+ * @param azureTenantId - Azure AD tenant ID
+ * @param requestedTenantId - Optional requested tenant ID (for admin panel)
+ * @returns Database tenant_id
+ */
+export function getTenantIdForUser(email: string, azureTenantId: string, requestedTenantId?: string): string {
+  // Techvana super-admins can access any tenant
+  if (isTechvanaSuperAdmin(email)) {
+    console.log(`🔐 Super-admin ${email} accessing tenant: ${requestedTenantId || 'default'}`);
+    return requestedTenantId || 'default';
+  }
+  
+  // Regular users get mapped to their tenant
+  return getDbTenantId(azureTenantId);
+}
+
+/**
  * Add a new tenant mapping (for dynamic configuration)
  * @param mapping - Tenant mapping to add
  */
@@ -94,6 +133,8 @@ export default {
   getDbTenantId,
   getTenantName,
   getAllTenants,
-  addTenantMapping
+  addTenantMapping,
+  isTechvanaSuperAdmin,
+  getTenantIdForUser
 };
 

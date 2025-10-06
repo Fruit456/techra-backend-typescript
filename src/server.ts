@@ -4,7 +4,7 @@ import { OpenAIClient, AzureKeyCredential } from '@azure/openai';
 import { SearchClient } from '@azure/search-documents';
 import dotenv from 'dotenv';
 import pg from 'pg';
-import { getDbTenantId, getTenantName } from './tenant-mapping';
+import { getDbTenantId, getTenantName, isTechvanaSuperAdmin, getTenantIdForUser } from './tenant-mapping';
 import { testConnection } from './database-pool';
 import { registerAdminRoutes } from './admin-routes';
 
@@ -131,16 +131,20 @@ const authenticate = async (request: any, reply: any) => {
       Buffer.from(token.split('.')[1], 'base64').toString('utf8')
     );
 
+    // Get user email
+    const userEmail = payload.upn || payload.email || payload.preferred_username || 'test@techra.app';
+    
     // Get Azure AD tenant ID from token
     const azureTenantId = payload.tid || config.tenantId;
     
-    // Map to database tenant_id
-    const dbTenantId = getDbTenantId(azureTenantId);
+    // Map to database tenant_id (super-admins can access all)
+    const dbTenantId = getTenantIdForUser(userEmail, azureTenantId);
+    const isSuperAdmin = isTechvanaSuperAdmin(userEmail);
     
-    console.log(`🔐 Auth: ${payload.email || 'unknown'} | Azure Tenant: ${azureTenantId} → DB Tenant: ${dbTenantId} (${getTenantName(dbTenantId)})`);
+    console.log(`🔐 Auth: ${userEmail}${isSuperAdmin ? ' (SUPER-ADMIN)' : ''} | Azure Tenant: ${azureTenantId} → DB Tenant: ${dbTenantId} (${getTenantName(dbTenantId)})`);
 
     const user: UserInfo = {
-      email: payload.upn || payload.email || payload.preferred_username || 'test@techra.app',
+      email: userEmail,
       name: payload.name || 'Test User',
       tenantId: dbTenantId, // Use mapped database tenant_id
       objectId: payload.oid || 'test-123',
