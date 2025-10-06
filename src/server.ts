@@ -4,6 +4,9 @@ import { OpenAIClient, AzureKeyCredential } from '@azure/openai';
 import { SearchClient } from '@azure/search-documents';
 import dotenv from 'dotenv';
 import pg from 'pg';
+import { getDbTenantId, getTenantName } from './tenant-mapping';
+import { testConnection } from './database-pool';
+import { registerAdminRoutes } from './admin-routes';
 
 // Load environment variables
 dotenv.config();
@@ -114,7 +117,7 @@ const fastify = Fastify({
   }
 });
 
-// Authentication middleware
+// Authentication middleware with multi-tenant support
 const authenticate = async (request: any, reply: any) => {
   try {
     const authHeader = request.headers.authorization;
@@ -128,21 +131,30 @@ const authenticate = async (request: any, reply: any) => {
       Buffer.from(token.split('.')[1], 'base64').toString('utf8')
     );
 
+    // Get Azure AD tenant ID from token
+    const azureTenantId = payload.tid || config.tenantId;
+    
+    // Map to database tenant_id
+    const dbTenantId = getDbTenantId(azureTenantId);
+    
+    console.log(`🔐 Auth: ${payload.email || 'unknown'} | Azure Tenant: ${azureTenantId} → DB Tenant: ${dbTenantId} (${getTenantName(dbTenantId)})`);
+
     const user: UserInfo = {
       email: payload.upn || payload.email || payload.preferred_username || 'test@techra.app',
       name: payload.name || 'Test User',
-      tenantId: payload.tid || config.tenantId,
+      tenantId: dbTenantId, // Use mapped database tenant_id
       objectId: payload.oid || 'test-123',
       groups: payload.groups || ['d5f7f6e7-380f-468d-9d0e-6a7c30fd3ef9'] // Default to SUPERVISOR_GROUP
     };
 
     request.user = user;
   } catch (error) {
+    console.error('❌ Authentication error:', error);
     // Development fallback
     request.user = {
       email: 'dev@techra.app',
       name: 'Development User',
-      tenantId: config.tenantId,
+      tenantId: 'default',
       objectId: 'dev-123',
       groups: ['d5f7f6e7-380f-468d-9d0e-6a7c30fd3ef9']
     };
@@ -193,15 +205,24 @@ async function setupServer() {
     credentials: true
   });
 
+  // Test database connection on startup
+  await testConnection();
+
+  // Register admin routes (Phase 7 & 8: Admin Panel + Multi-Tenant)
+  registerAdminRoutes(fastify, authenticate);
+
   // Health check
   fastify.get('/', async () => {
     return { 
-      message: 'Techra TypeScript Backend API v2.1.1', 
+      message: 'Techra TypeScript Backend API v2.4.0 - Multi-Tenant', 
       status: 'healthy',
       features: {
         openai: !!openAIClient,
         search: !!searchClient,
-        rag: !!openAIClient && !!searchClient
+        rag: !!openAIClient && !!searchClient,
+        database: !!pgPool,
+        multiTenant: true,
+        adminPanel: true
       },
       timestamp: new Date().toISOString()
     };
@@ -210,7 +231,7 @@ async function setupServer() {
   fastify.get('/health', async () => {
     return {
       status: 'healthy',
-      version: '2.1.1',
+      version: '2.4.0',
       timestamp: new Date().toISOString()
     };
   });
