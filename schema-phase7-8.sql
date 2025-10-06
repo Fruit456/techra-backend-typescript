@@ -1,8 +1,19 @@
 -- Phase 7 & 8: Multi-tenant support and admin features
+-- This script is idempotent and safe to run multiple times
 
--- Add tenant_id to existing tables
-ALTER TABLE trains ADD COLUMN IF NOT EXISTS tenant_id VARCHAR(100) DEFAULT 'default';
-ALTER TABLE aggregates ADD COLUMN IF NOT EXISTS is_spare BOOLEAN DEFAULT false;
+-- Add tenant_id to existing tables (if not exists)
+DO $$ 
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                 WHERE table_name='trains' AND column_name='tenant_id') THEN
+    ALTER TABLE trains ADD COLUMN tenant_id VARCHAR(100) DEFAULT 'default';
+  END IF;
+  
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                 WHERE table_name='aggregates' AND column_name='is_spare') THEN
+    ALTER TABLE aggregates ADD COLUMN is_spare BOOLEAN DEFAULT false;
+  END IF;
+END $$;
 
 -- Create tenants table
 CREATE TABLE IF NOT EXISTS tenants (
@@ -56,7 +67,7 @@ CREATE TABLE IF NOT EXISTS aggregate_replacements (
     replaced_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Insert default tenant
+-- Insert default tenant (Öresundståg)
 INSERT INTO tenants (tenant_id, name, primary_color, language)
 VALUES ('default', 'Öresundståg', '#3B82F6', 'sv')
 ON CONFLICT (tenant_id) DO NOTHING;
@@ -77,34 +88,25 @@ VALUES (
 )
 ON CONFLICT (tenant_id) DO NOTHING;
 
--- Insert Snälltåget tenant
-INSERT INTO tenants (tenant_id, name, primary_color, language)
-VALUES ('snalltaget', 'Snälltåget', '#10B981', 'sv')
-ON CONFLICT (tenant_id) DO NOTHING;
-
--- Insert configuration for Snälltåget (1 wagon)
-INSERT INTO train_configurations (tenant_id, wagon_count, wagon_types, custom_labels)
-VALUES (
-    'snalltaget',
-    1,
-    '["Sovvagn"]'::jsonb,
-    '{
-        "Sovvagn": "Sovvagn"
-    }'::jsonb
-)
-ON CONFLICT (tenant_id) DO NOTHING;
-
--- Create indexes
+-- Create indexes (if not exists)
 CREATE INDEX IF NOT EXISTS idx_trains_tenant_id ON trains(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_aggregates_is_spare ON aggregates(is_spare);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_tenant_id ON audit_logs(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_aggregate_replacements_tenant_id ON aggregate_replacements(tenant_id);
 
--- Update existing trains to have tenant_id
-UPDATE trains SET tenant_id = 'default' WHERE tenant_id IS NULL OR tenant_id = 'default';
+-- Update existing trains to have tenant_id (if not already set)
+UPDATE trains SET tenant_id = 'default' WHERE tenant_id IS NULL OR tenant_id = '';
 
+-- Add comments
 COMMENT ON TABLE tenants IS 'Multi-tenant configuration';
 COMMENT ON TABLE train_configurations IS 'Flexible wagon configurations per tenant';
 COMMENT ON TABLE audit_logs IS 'System audit trail';
 COMMENT ON TABLE aggregate_replacements IS 'Aggregate swap history';
+
+-- Grant permissions (if using specific DB user)
+-- GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO techra_api_user;
+-- GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO techra_api_user;
+
+-- Success message
+SELECT 'Multi-tenant schema (Phase 7 & 8) applied successfully! ✅' AS status;
