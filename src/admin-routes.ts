@@ -28,7 +28,7 @@ export function registerAdminRoutes(fastify: FastifyInstance, authenticate: any)
       return result.rows;
     } catch (error) {
       console.error('❌ Error fetching trains:', error);
-      reply.code(500).send({ error: 'Failed to fetch trains', details: error.message });
+      reply.code(500).send({ error: 'Failed to fetch trains', details: (error as Error).message });
     }
   });
 
@@ -65,7 +65,7 @@ export function registerAdminRoutes(fastify: FastifyInstance, authenticate: any)
       };
     } catch (error) {
       console.error(`❌ Error fetching train ${request.params.id}:`, error);
-      reply.code(500).send({ error: 'Failed to fetch train', details: error.message });
+      reply.code(500).send({ error: 'Failed to fetch train', details: (error as Error).message });
     }
   });
 
@@ -84,7 +84,7 @@ export function registerAdminRoutes(fastify: FastifyInstance, authenticate: any)
       return result.rows;
     } catch (error) {
       console.error('❌ Error fetching aggregates:', error);
-      reply.code(500).send({ error: 'Failed to fetch aggregates', details: error.message });
+      reply.code(500).send({ error: 'Failed to fetch aggregates', details: (error as Error).message });
     }
   });
 
@@ -101,7 +101,7 @@ export function registerAdminRoutes(fastify: FastifyInstance, authenticate: any)
       return result.rows;
     } catch (error) {
       console.error('❌ Error fetching spare aggregates:', error);
-      reply.code(500).send({ error: 'Failed to fetch spare aggregates', details: error.message });
+      reply.code(500).send({ error: 'Failed to fetch spare aggregates', details: (error as Error).message });
     }
   });
 
@@ -123,7 +123,7 @@ export function registerAdminRoutes(fastify: FastifyInstance, authenticate: any)
       return result.rows;
     } catch (error) {
       console.error(`❌ Error fetching aggregates by status ${request.params.status}:`, error);
-      reply.code(500).send({ error: 'Failed to fetch aggregates by status', details: error.message });
+      reply.code(500).send({ error: 'Failed to fetch aggregates by status', details: (error as Error).message });
     }
   });
 
@@ -144,7 +144,7 @@ export function registerAdminRoutes(fastify: FastifyInstance, authenticate: any)
       return result.rows;
     } catch (error) {
       console.error(`❌ Error fetching car aggregates for ${request.params.id}:`, error);
-      reply.code(500).send({ error: 'Failed to fetch car aggregates', details: error.message });
+      reply.code(500).send({ error: 'Failed to fetch car aggregates', details: (error as Error).message });
     }
   });
 
@@ -164,7 +164,7 @@ export function registerAdminRoutes(fastify: FastifyInstance, authenticate: any)
       return result.rows[0];
     } catch (error) {
       console.error(`❌ Error creating car aggregate:`, error);
-      reply.code(500).send({ error: 'Failed to create car aggregate', details: error.message });
+      reply.code(500).send({ error: 'Failed to create car aggregate', details: (error as Error).message });
     }
   });
 
@@ -183,7 +183,7 @@ export function registerAdminRoutes(fastify: FastifyInstance, authenticate: any)
       return result.rows[0];
     } catch (error) {
       console.error(`❌ Error creating spare aggregate:`, error);
-      reply.code(500).send({ error: 'Failed to create spare aggregate', details: error.message });
+      reply.code(500).send({ error: 'Failed to create spare aggregate', details: (error as Error).message });
     }
   });
 
@@ -207,7 +207,7 @@ export function registerAdminRoutes(fastify: FastifyInstance, authenticate: any)
       return result.rows[0];
     } catch (error) {
       console.error(`❌ Error moving aggregate:`, error);
-      reply.code(500).send({ error: 'Failed to move aggregate', details: error.message });
+      reply.code(500).send({ error: 'Failed to move aggregate', details: (error as Error).message });
     }
   });
 
@@ -231,7 +231,7 @@ export function registerAdminRoutes(fastify: FastifyInstance, authenticate: any)
       return result.rows[0];
     } catch (error) {
       console.error(`❌ Error unassigning aggregate:`, error);
-      reply.code(500).send({ error: 'Failed to unassign aggregate', details: error.message });
+      reply.code(500).send({ error: 'Failed to unassign aggregate', details: (error as Error).message });
     }
   });
 
@@ -245,7 +245,7 @@ export function registerAdminRoutes(fastify: FastifyInstance, authenticate: any)
       return [];
     } catch (error) {
       console.error(`❌ Error fetching aggregate history:`, error);
-      reply.code(500).send({ error: 'Failed to fetch aggregate history', details: error.message });
+      reply.code(500).send({ error: 'Failed to fetch aggregate history', details: (error as Error).message });
     }
   });
 
@@ -287,7 +287,7 @@ export function registerAdminRoutes(fastify: FastifyInstance, authenticate: any)
       }
     } catch (error) {
       console.error(`❌ Error swapping aggregates:`, error);
-      reply.code(500).send({ error: 'Failed to swap aggregates', details: error.message });
+      reply.code(500).send({ error: 'Failed to swap aggregates', details: (error as Error).message });
     }
   });
 
@@ -310,7 +310,7 @@ export function registerAdminRoutes(fastify: FastifyInstance, authenticate: any)
       return { success: true, message: 'Aggregate deleted successfully' };
     } catch (error) {
       console.error(`❌ Error deleting aggregate:`, error);
-      reply.code(500).send({ error: 'Failed to delete aggregate', details: error.message });
+      reply.code(500).send({ error: 'Failed to delete aggregate', details: (error as Error).message });
     }
   });
 
@@ -329,7 +329,7 @@ export function registerAdminRoutes(fastify: FastifyInstance, authenticate: any)
       return result.rows[0];
     } catch (error) {
       console.error(`❌ Error creating train:`, error);
-      reply.code(500).send({ error: 'Failed to create train', details: error.message });
+      reply.code(500).send({ error: 'Failed to create train', details: (error as Error).message });
     }
   });
 
@@ -358,7 +358,7 @@ export function registerAdminRoutes(fastify: FastifyInstance, authenticate: any)
       return result.rows;
     } catch (error) {
       console.error('❌ Error fetching all trains:', error);
-      reply.code(500).send({ error: 'Failed to fetch all trains', details: error.message });
+      reply.code(500).send({ error: 'Failed to fetch all trains', details: (error as Error).message });
     }
   });
 
@@ -377,7 +377,7 @@ export function registerAdminRoutes(fastify: FastifyInstance, authenticate: any)
       return result.rows[0];
     } catch (error) {
       console.error(`❌ Error configuring train:`, error);
-      reply.code(500).send({ error: 'Failed to configure train', details: error.message });
+      reply.code(500).send({ error: 'Failed to configure train', details: (error as Error).message });
     }
   });
 
@@ -394,7 +394,7 @@ export function registerAdminRoutes(fastify: FastifyInstance, authenticate: any)
       return result.rows;
     } catch (error) {
       console.error('❌ Error fetching spare aggregates:', error);
-      reply.code(500).send({ error: 'Failed to fetch spare aggregates', details: error.message });
+      reply.code(500).send({ error: 'Failed to fetch spare aggregates', details: (error as Error).message });
     }
   });
 
@@ -433,7 +433,7 @@ export function registerAdminRoutes(fastify: FastifyInstance, authenticate: any)
       }
     } catch (error) {
       console.error(`❌ Error replacing aggregate:`, error);
-      reply.code(500).send({ error: 'Failed to replace aggregate', details: error.message });
+      reply.code(500).send({ error: 'Failed to replace aggregate', details: (error as Error).message });
     }
   });
 
@@ -445,7 +445,7 @@ export function registerAdminRoutes(fastify: FastifyInstance, authenticate: any)
       return [];
     } catch (error) {
       console.error('❌ Error fetching audit logs:', error);
-      reply.code(500).send({ error: 'Failed to fetch audit logs', details: error.message });
+      reply.code(500).send({ error: 'Failed to fetch audit logs', details: (error as Error).message });
     }
   });
 
@@ -467,7 +467,7 @@ export function registerAdminRoutes(fastify: FastifyInstance, authenticate: any)
       }];
     } catch (error) {
       console.error('❌ Error fetching tenants:', error);
-      reply.code(500).send({ error: 'Failed to fetch tenants', details: error.message });
+      reply.code(500).send({ error: 'Failed to fetch tenants', details: (error as Error).message });
     }
   });
 
@@ -491,7 +491,7 @@ export function registerAdminRoutes(fastify: FastifyInstance, authenticate: any)
       };
     } catch (error) {
       console.error(`❌ Error fetching tenant configuration:`, error);
-      reply.code(500).send({ error: 'Failed to fetch tenant configuration', details: error.message });
+      reply.code(500).send({ error: 'Failed to fetch tenant configuration', details: (error as Error).message });
     }
   });
 
@@ -505,7 +505,7 @@ export function registerAdminRoutes(fastify: FastifyInstance, authenticate: any)
       return { success: true, message: 'Configuration updated' };
     } catch (error) {
       console.error(`❌ Error updating tenant configuration:`, error);
-      reply.code(500).send({ error: 'Failed to update tenant configuration', details: error.message });
+      reply.code(500).send({ error: 'Failed to update tenant configuration', details: (error as Error).message });
     }
   });
 }
