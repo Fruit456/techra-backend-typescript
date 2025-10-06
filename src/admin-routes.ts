@@ -19,7 +19,7 @@ export function registerAdminRoutes(fastify: FastifyInstance, authenticate: any)
       const result = await pool.query(`
         SELECT t.*, COUNT(DISTINCT c.id) as car_count 
         FROM trains t
-        LEFT JOIN cars c ON t.train_number = c.train_id
+        LEFT JOIN cars c ON CAST(t.id AS VARCHAR) = c.train_id
         GROUP BY t.id, t.train_number, t.name, t.operator, t.status, t.created_at, t.updated_at, t.tenant_id
         ORDER BY t.train_number
       `, []);
