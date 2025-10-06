@@ -4,7 +4,69 @@ import { pool } from './database-pool';
 // Admin routes for Phase 7
 export function registerAdminRoutes(fastify: FastifyInstance, authenticate: any) {
   
-  // Get all trains with detailed stats
+  // Get all trains (simple list - used by Fleet page)
+  fastify.get('/api/trains', { preHandler: authenticate }, async (request, reply) => {
+    try {
+      const result = await pool.query(`
+        SELECT t.*, COUNT(w.id) as wagon_count 
+        FROM trains t
+        LEFT JOIN wagons w ON t.id = w.train_id
+        GROUP BY t.id
+        ORDER BY t.train_number
+      `);
+      return result.rows;
+    } catch (error) {
+      console.error('Error fetching trains:', error);
+      reply.code(500).send({ error: 'Failed to fetch trains' });
+    }
+  });
+
+  // Get single train with wagons
+  fastify.get('/api/trains/:id', { preHandler: authenticate }, async (request: any, reply) => {
+    try {
+      const { id } = request.params;
+      
+      const trainResult = await pool.query('SELECT * FROM trains WHERE id = $1', [id]);
+      if (trainResult.rows.length === 0) {
+        return reply.code(404).send({ error: 'Train not found' });
+      }
+      
+      const wagonsResult = await pool.query(`
+        SELECT w.*, a.aggregate_number, a.type as aggregate_type, a.status as aggregate_status
+        FROM wagons w
+        LEFT JOIN aggregates a ON w.id = a.current_wagon_id
+        WHERE w.train_id = $1
+        ORDER BY w.position
+      `, [id]);
+      
+      return {
+        ...trainResult.rows[0],
+        wagons: wagonsResult.rows
+      };
+    } catch (error) {
+      console.error('Error fetching train:', error);
+      reply.code(500).send({ error: 'Failed to fetch train' });
+    }
+  });
+
+  // Get all aggregates
+  fastify.get('/api/aggregates', { preHandler: authenticate }, async (request, reply) => {
+    try {
+      const result = await pool.query(`
+        SELECT a.*, w.wagon_number, w.wagon_type, t.train_number
+        FROM aggregates a
+        LEFT JOIN wagons w ON a.current_wagon_id = w.id
+        LEFT JOIN trains t ON w.train_id = t.id
+        ORDER BY a.aggregate_number
+      `);
+      return result.rows;
+    } catch (error) {
+      console.error('Error fetching aggregates:', error);
+      reply.code(500).send({ error: 'Failed to fetch aggregates' });
+    }
+  });
+  
+  // Get all trains with detailed stats (used by Admin Panel)
   fastify.get('/api/trains/all', { preHandler: authenticate }, async (request: any, reply) => {
     try {
       const tenantId = request.user?.tenantId || 'default';
