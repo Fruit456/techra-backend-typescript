@@ -1,0 +1,6 @@
+# Agent Ignore File
+.env
+.env.*
+node_modules/
+dist/
+*.log
