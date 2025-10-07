@@ -201,6 +201,7 @@ async function setupServer() {
   await fastify.register(cors, {
     origin: [
       'https://www.techra.app',
+      'https://techra.app',
       'https://techra-frontend.zealous-wave-0e1234567.1.azurestaticapps.net',
       'https://gentle-ocean-00c563303.1.azurestaticapps.net',
       'http://localhost:3000',
