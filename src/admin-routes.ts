@@ -76,7 +76,7 @@ export function registerAdminRoutes(fastify: FastifyInstance, authenticate: any)
         SELECT a.*, c.car_number, c.car_type, t.train_number
         FROM aggregates a
         LEFT JOIN cars c ON a.current_car_id = c.id
-        LEFT JOIN trains t ON c.train_id = t.train_number
+        LEFT JOIN trains t ON c.train_id = CAST(t.id AS VARCHAR)
         ORDER BY a.aggregate_number
       `);
       
@@ -114,7 +114,7 @@ export function registerAdminRoutes(fastify: FastifyInstance, authenticate: any)
         SELECT a.*, c.car_number, c.car_type, t.train_number
         FROM aggregates a
         LEFT JOIN cars c ON a.current_car_id = c.id
-        LEFT JOIN trains t ON c.train_id = t.train_number
+        LEFT JOIN trains t ON c.train_id = CAST(t.id AS VARCHAR)
         WHERE a.status = $1
         ORDER BY a.aggregate_number
       `, [status]);
@@ -348,7 +348,7 @@ export function registerAdminRoutes(fastify: FastifyInstance, authenticate: any)
           COUNT(DISTINCT CASE WHEN a.status = 'operational' THEN a.id END) as operational_aggregates,
           COUNT(DISTINCT CASE WHEN a.status != 'operational' THEN a.id END) as faulty_aggregates
         FROM trains t
-        LEFT JOIN cars c ON t.train_number = c.train_id
+        LEFT JOIN cars c ON CAST(t.id AS VARCHAR) = c.train_id
         LEFT JOIN aggregates a ON c.id = a.current_car_id
         GROUP BY t.id, t.train_number, t.name, t.operator, t.status, t.created_at, t.updated_at, t.tenant_id
         ORDER BY t.train_number
